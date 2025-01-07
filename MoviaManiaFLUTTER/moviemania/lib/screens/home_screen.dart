@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/movie_api_service.dart';
 import '../models/movie.dart';
-import '../widgets/movie_card.dart';
 import '../widgets/bottom_navbar.dart';
-import 'search_screen.dart';
+import '../widgets/movie_column.dart';
+import '../widgets/trending_movie_card.dart';
 import 'watchlist_screen.dart';
+import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,9 +17,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Movie>> _movies;
   int _currentIndex = 0;
-  bool _previousWatched = false;
-  bool _todayWatched = false;
-  bool _tomorrowWatched = false;
+  final List<bool> _previousDayChecked = [false, false, false];
+  final List<bool> _todayChecked = [false, false, false];
+  final List<bool> _tomorrowChecked = [false, false, false];
 
   @override
   void initState() {
@@ -32,164 +33,150 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  double _getProgress() {
+    int checkedCount = _previousDayChecked.where((e) => e).length +
+        _todayChecked.where((e) => e).length +
+        _tomorrowChecked.where((e) => e).length;
+    int totalCount = _previousDayChecked.length +
+        _todayChecked.length +
+        _tomorrowChecked.length;
+    return checkedCount / totalCount;
+  }
+
+  String _getWatchedCount() {
+    int checkedCount = _previousDayChecked.where((e) => e).length +
+        _todayChecked.where((e) => e).length +
+        _tomorrowChecked.where((e) => e).length;
+    int totalCount = _previousDayChecked.length +
+        _todayChecked.length +
+        _tomorrowChecked.length;
+    return '$checkedCount/$totalCount';
+  }
+
+  Widget _buildHomeContent() {
+    return FutureBuilder<List<Movie>>(
+      future: _movies,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return const Center(child: Text('Failed to load movies.'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No movies available.'));
+        }
+
+        final movies = snapshot.data!;
+
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 8.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Text(
+                    'Watched: ${_getWatchedCount()}',
+                    style: const TextStyle(fontSize: 16, color: Colors.white),
+                    textAlign: TextAlign.left,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: LinearProgressIndicator(
+                  value: _getProgress(),
+                  backgroundColor: Colors.blueGrey[900],
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    MovieColumn(
+                      title: 'Previous Day',
+                      movie: movies.isNotEmpty ? movies[0] : null,
+                      isChecked: _previousDayChecked[0],
+                      onChanged: (value) {
+                        setState(() {
+                          _previousDayChecked[0] = value!;
+                        });
+                      },
+                    ),
+                    MovieColumn(
+                      title: 'Today',
+                      movie: movies.length > 1 ? movies[1] : null,
+                      isChecked: _todayChecked[0],
+                      onChanged: (value) {
+                        setState(() {
+                          _todayChecked[0] = value!;
+                        });
+                      },
+                    ),
+                    MovieColumn(
+                      title: 'Tomorrow',
+                      movie: movies.length > 2 ? movies[2] : null,
+                      isChecked: _tomorrowChecked[0],
+                      onChanged: (value) {
+                        setState(() {
+                          _tomorrowChecked[0] = value!;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              // Watched Text and Progress Bar
+
+              const SizedBox(height: 16.0),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Trending',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              SizedBox(
+                height: 300,
+                child: ListView.builder(
+                  scrollDirection: Axis.vertical,
+                  itemCount: movies.length,
+                  itemBuilder: (context, index) {
+                    return TrendingMovieCard(movie: movies[index]);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       Scaffold(
         appBar: AppBar(
-          title: Column(
-            children: [
-              const Text('MovieMania'),
-              const SizedBox(height: 8.0),
-              LinearProgressIndicator(
-                value: 0.5, // Example progress value
-                backgroundColor: Colors.grey[300],
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
-              ),
-              const SizedBox(height: 8.0),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 16.0), // Add padding for better spacing
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, // Align items at the top
-                  children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Previous',
-                              style: TextStyle(fontSize: 18)),
-                          const SizedBox(height: 10),
-                          const Icon(
-                            Icons.movie,
-                            size: 100,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text('Watched',
-                                  style: TextStyle(fontSize: 16)),
-                              Checkbox(
-                                value: _previousWatched,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    _previousWatched = value!;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Today', style: TextStyle(fontSize: 18)),
-                          const SizedBox(height: 10),
-                          const Icon(
-                            Icons.movie,
-                            size: 100,
-                            color: Colors.amber,
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text('Watched',
-                                  style: TextStyle(fontSize: 16)),
-                              Checkbox(
-                                value: _todayWatched,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    _todayWatched = value!;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Tomorrow',
-                              style: TextStyle(fontSize: 18)),
-                          const SizedBox(height: 10),
-                          const Icon(
-                            Icons.movie,
-                            size: 100,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text('Watched',
-                                  style: TextStyle(fontSize: 16)),
-                              Checkbox(
-                                value: _tomorrowWatched,
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    _tomorrowWatched = value!;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            ],
-          ),
-          centerTitle: true,
+          title: const Text('MovieMania',
+          textAlign: TextAlign.center,),
+          backgroundColor: Colors.black,
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: FutureBuilder<List<Movie>>(
-            future: _movies,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No movies available'));
-              } else {
-                final movies = snapshot.data!;
-                return ListView.builder(
-                  itemCount: movies.length,
-                  itemBuilder: (ctx, index) => MovieCard(movie: movies[index]),
-                );
-              }
-            },
-          ),
-        ),
+        backgroundColor: Colors.black,
+        body: _buildHomeContent(),
       ),
-      const WatchlistScreen(), // Watchlist screen
-      const SearchScreen(), // Search screen
+      const WatchlistScreen(),
+      const SearchScreen(),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('MovieMania'),
-        centerTitle: true,
-      ),
-      body: screens[
-          _currentIndex], // Display the current screen based on the selected index
+      body: screens[_currentIndex],
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
-        onTap: _onNavItemTapped, // Handle tap on bottom navigation
+        onTap: _onNavItemTapped,
       ),
     );
   }

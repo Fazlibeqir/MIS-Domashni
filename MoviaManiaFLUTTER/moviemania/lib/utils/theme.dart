@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 final ThemeData theme = ThemeData(
   brightness: Brightness.dark,  // Force dark mode
-  primaryColor: Colors.deepPurple,
+  primaryColor: Colors.black,
   colorScheme: const ColorScheme.dark(secondary: Colors.amber),
   canvasColor: Colors.black,
   scaffoldBackgroundColor: Colors.black,
-  appBarTheme: AppBarTheme(
-    backgroundColor: Colors.deepPurple[700],
+  appBarTheme: const AppBarTheme(
+    backgroundColor: Colors.black,
   ),
   textTheme: const TextTheme(
     titleLarge: TextStyle(color: Colors.white, fontSize: 22),
