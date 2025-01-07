@@ -15,12 +15,27 @@ class MovieCard extends StatelessWidget {
         MaterialPageRoute(builder: (context) => MovieDetailsScreen(movie: movie)),
       ),
       child: Card(
-        child: ListTile(
-          leading: movie.imageUrl.isNotEmpty
-              ? Image.network(movie.imageUrl, fit: BoxFit.cover, width: 50)
-              : const Icon(Icons.movie, size: 50),
-          title: Text(movie.title),
-          subtitle: Text(movie.releaseDate.toLocal().toString().split(' ')[0]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            movie.imageUrl.isNotEmpty
+                ? Image.network(movie.imageUrl, fit: BoxFit.cover, width: double.infinity, height: 200)
+                : const Icon(Icons.movie, size: 200),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                movie.title,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                movie.releaseDate.toLocal().toString().split(' ')[0],
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          ],
         ),
       ),
     );

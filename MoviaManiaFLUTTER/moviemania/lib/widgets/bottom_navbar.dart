@@ -17,8 +17,8 @@ class BottomNavBar extends StatelessWidget {
       onTap: onTap,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
         BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Watchlist'),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
       ],
     );
   }
